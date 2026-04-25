@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seyahat Kasa Takibi</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg2: #161b27;
+    --bg3: #1e2536;
+    --card: #1a2133;
+    --border: #2a3347;
+    --border2: #3a4a63;
+    --text: #e8eaf0;
+    --text2: #8b95a8;
+    --text3: #5a6478;
+    --green: #22c55e;
+    --green-bg: #052612;
+    --green-border: #0f5724;
+    --red: #ef4444;
+    --red-bg: #2a0707;
+    --red-border: #5a1515;
+    --blue: #3b82f6;
+    --blue-bg: #071224;
+    --blue-border: #143356;
+    --amber: #f59e0b;
+    --amber-bg: #1a1000;
+    --amber-border: #3d2a00;
+    --accent: #4f8ef7;
+    --accent2: #6366f1;
+    --shadow: 0 4px 24px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 17px; font-weight: 700; color: var(--text);
+  }
+  .logo svg { color: var(--accent); }
+  nav { display: flex; gap: 2px; margin-left: auto; }
+  nav button {
+    background: none; border: none; color: var(--text2);
+    padding: 8px 14px; border-radius: 8px; cursor: pointer;
+    font-size: 13px; font-weight: 500; transition: all 0.15s;
+  }
+  nav button:hover { background: var(--bg3); color: var(--text); }
+  nav button.active { background: var(--accent); color: #fff; }
+
+  /* LAYOUT */
+  .page { display: none; padding: 24px; max-width: 1100px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* CARDS */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .kpi {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .kpi label { font-size: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi .val { font-size: 26px; font-weight: 700; margin-top: 6px; }
+  .kpi .val.pos { color: var(--green); }
+  .kpi .val.neg { color: var(--red); }
+  .kpi .val.neu { color: var(--accent); }
+
+  /* TABLE */
+  .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .table-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap; gap: 10px;
+  }
+  .table-header h3 { font-size: 15px; font-weight: 600; flex: 1; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text3);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--bg3); }
+  tbody td { padding: 11px 16px; color: var(--text); vertical-align: middle; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;
+  }
+  .badge.gelir { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+  .badge.gider { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+  .amount-pos { color: var(--green); font-weight: 600; }
+  .amount-neg { color: var(--red); font-weight: 600; }
+  .del-btn {
+    background: none; border: none; color: var(--text3);
+    cursor: pointer; padding: 4px 8px; border-radius: 6px;
+    font-size: 16px; transition: all 0.15s;
+  }
+  .del-btn:hover { background: var(--red-bg); color: var(--red); }
+
+  /* FILTERS */
+  .filter-bar {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    margin-bottom: 20px;
+  }
+  .filter-bar select, .filter-bar input[type="date"] {
+    background: var(--bg2); border: 1px solid var(--border);
+    color: var(--text); padding: 8px 12px; border-radius: 8px;
+    font-size: 13px; cursor: pointer;
+  }
+  .filter-bar select:focus, .filter-bar input:focus { outline: 2px solid var(--accent); }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: none; transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #3a7ae8; }
+  .btn-success { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+  .btn-success:hover { background: #073b1a; }
+  .btn-danger-outline { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+  .btn-danger-outline:hover { background: #3d0a0a; }
+  .btn-outline { background: var(--bg3); color: var(--text); border: 1px solid var(--border2); }
+  .btn-outline:hover { background: var(--bg2); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7); z-index: 200;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: 16px; padding: 28px;
+    width: 480px; max-width: 95vw; max-height: 90vh; overflow-y: auto;
+    box-shadow: var(--shadow);
+  }
+  .modal h2 { font-size: 18px; margin-bottom: 20px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; font-weight: 500; }
+  .form-group select, .form-group input, .form-group textarea {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+    color: var(--text); padding: 10px 12px; border-radius: 8px; font-size: 14px;
+  }
+  .form-group select:focus, .form-group input:focus, .form-group textarea:focus {
+    outline: 2px solid var(--accent); border-color: transparent;
+  }
+  .form-group textarea { resize: vertical; min-height: 70px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+  .price-display {
+    background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 10px 12px; color: var(--text2); font-size: 13px;
+  }
+
+  /* SETTINGS */
+  .settings-section { margin-bottom: 28px; }
+  .settings-section h3 { font-size: 15px; font-weight: 600; margin-bottom: 14px; color: var(--text); }
+  .item-list { display: flex; flex-direction: column; gap: 8px; }
+  .item-row {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px;
+  }
+  .item-row .name { flex: 1; font-weight: 500; }
+  .item-row .price-tag {
+    font-size: 12px; background: var(--bg3);
+    border: 1px solid var(--border2); border-radius: 5px;
+    padding: 2px 8px; color: var(--text2);
+  }
+  .item-row .fixed-tag {
+    font-size: 11px; background: var(--blue-bg);
+    border: 1px solid var(--blue-border); border-radius: 5px;
+    padding: 2px 8px; color: var(--blue);
+  }
+  .add-item-form {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;
+  }
+  .add-item-form input, .add-item-form select {
+    background: var(--bg3); border: 1px solid var(--border2);
+    color: var(--text); padding: 8px 12px; border-radius: 8px; font-size: 13px;
+  }
+  .add-item-form input:focus, .add-item-form select:focus { outline: 2px solid var(--accent); }
+  .add-item-form input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+  .checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text2); }
+
+  /* REPORT */
+  .report-summary {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px; margin-bottom: 24px;
+  }
+  .rep-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px;
+  }
+  .rep-card label { font-size: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+  .rep-card .val { font-size: 24px; font-weight: 700; margin-top: 8px; }
+
+  /* EMPTY STATE */
+  .empty { text-align: center; padding: 48px; color: var(--text3); font-size: 15px; }
+  .empty svg { display: block; margin: 0 auto 16px; }
+
+  /* TOAST */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--bg2); border: 1px solid var(--border2);
+    color: var(--text); padding: 12px 20px; border-radius: 10px;
+    font-size: 14px; box-shadow: var(--shadow); z-index: 999;
+    transform: translateY(80px); opacity: 0; transition: all 0.3s;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.ok { border-color: var(--green-border); color: var(--green); }
+  #toast.err { border-color: var(--red-border); color: var(--red); }
+
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+  /* ICON */
+  .icon { display: inline-flex; }
+
+  @media (max-width: 600px) {
+    header { padding: 0 12px; }
+    nav button { padding: 7px 8px; font-size: 12px; }
+    .page { padding: 14px; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/>
+      <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2M12 12v2m0-4h.01"/>
+    </svg>
+    Seyahat Kasa
+  </div>
+  <nav>
+    <button class="active" onclick="showPage('dashboard')">Özet</button>
+    <button onclick="showPage('transactions')">İşlemler</button>
+    <button onclick="showPage('report')">Rapor</button>
+    <button onclick="showPage('settings')">Ayarlar</button>
+  </nav>
+</header>
+
+<!-- DASHBOARD -->
+<div class="page active" id="page-dashboard">
+  <div class="kpi-grid" id="kpi-grid"></div>
+  <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+    <button class="btn btn-success" onclick="openModal('gelir')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7-7 7 7"/></svg>
+      Gelir Ekle
+    </button>
+    <button class="btn btn-danger-outline" onclick="openModal('gider')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7 7 7-7"/></svg>
+      Gider Ekle
+    </button>
+    <button class="btn btn-outline" onclick="exportData()" style="margin-left:auto;">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+      Dışa Aktar
+    </button>
+    <label class="btn btn-outline" style="cursor:pointer;">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+      İçe Aktar
+      <input type="file" accept=".json" onchange="importData(event)" style="display:none;">
+    </label>
+    <button class="btn btn-danger-outline" onclick="clearAll()">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
+      Temizle
+    </button>
+  </div>
+  <div class="table-wrap">
+    <div class="table-header">
+      <h3>Son İşlemler</h3>
+    </div>
+    <div id="dash-table"></div>
+  </div>
+</div>
+
+<!-- TRANSACTIONS -->
+<div class="page" id="page-transactions">
+  <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
+    <button class="btn btn-success" onclick="openModal('gelir')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7-7 7 7"/></svg>
+      Gelir Ekle
+    </button>
+    <button class="btn btn-danger-outline" onclick="openModal('gider')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7 7 7-7"/></svg>
+      Gider Ekle
+    </button>
+  </div>
+  <div class="filter-bar">
+    <select id="filter-type" onchange="renderTransactions()">
+      <option value="">Tümü</option>
+      <option value="gelir">Gelir</option>
+      <option value="gider">Gider</option>
+    </select>
+    <input type="date" id="filter-start" onchange="renderTransactions()" placeholder="Başlangıç">
+    <input type="date" id="filter-end" onchange="renderTransactions()" placeholder="Bitiş">
+    <button class="btn btn-outline btn-sm" onclick="clearFilters()">Filtreyi Temizle</button>
+  </div>
+  <div class="table-wrap">
+    <div id="tx-table"></div>
+  </div>
+</div>
+
+<!-- REPORT -->
+<div class="page" id="page-report">
+  <div class="filter-bar" style="margin-bottom:24px;">
+    <select id="rep-period" onchange="renderReport()">
+      <option value="week">Bu Hafta</option>
+      <option value="month" selected>Bu Ay</option>
+      <option value="custom">Özel Tarih</option>
+    </select>
+    <span id="custom-range" style="display:none; gap:8px; align-items:center; display:none;">
+      <input type="date" id="rep-start" onchange="renderReport()">
+      <span style="color:var(--text3)">—</span>
+      <input type="date" id="rep-end" onchange="renderReport()">
+    </span>
+  </div>
+  <div class="report-summary" id="rep-summary"></div>
+  <div class="table-wrap">
+    <div class="table-header"><h3 id="rep-title">Dönem Detayı</h3></div>
+    <div id="rep-table"></div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="page" id="page-settings">
+  <div class="settings-section">
+    <h3>Gelir Kalemleri</h3>
+    <div class="item-list" id="gelir-items"></div>
+    <div class="add-item-form" id="add-gelir-form" style="margin-top:12px;">
+      <input type="text" id="gelir-name-inp" placeholder="Kalem adı (örn: Yolcu Ücreti)" style="flex:1; min-width:140px;">
+      <div class="checkbox-row">
+        <input type="checkbox" id="gelir-fixed-chk" onchange="toggleFixedPrice('gelir')">
+        <label for="gelir-fixed-chk">Sabit Fiyat</label>
+      </div>
+      <input type="number" id="gelir-price-inp" placeholder="Fiyat ₺" style="width:110px; display:none;" min="0">
+      <button class="btn btn-success btn-sm" onclick="addItem('gelir')">Ekle</button>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="settings-section">
+    <h3>Gider Kalemleri</h3>
+    <div class="item-list" id="gider-items"></div>
+    <div class="add-item-form" id="add-gider-form" style="margin-top:12px;">
+      <input type="text" id="gider-name-inp" placeholder="Kalem adı (örn: Yakıt Ücreti)" style="flex:1; min-width:140px;">
+      <div class="checkbox-row">
+        <input type="checkbox" id="gider-fixed-chk" onchange="toggleFixedPrice('gider')">
+        <label for="gider-fixed-chk">Sabit Fiyat</label>
+      </div>
+      <input type="number" id="gider-price-inp" placeholder="Fiyat ₺" style="width:110px; display:none;" min="0">
+      <button class="btn btn-danger-outline btn-sm" onclick="addItem('gider')">Ekle</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD TRANSACTION -->
+<div class="modal-overlay" id="tx-modal" onclick="closeModalOut(event)">
+  <div class="modal">
+    <h2 id="modal-title">Gelir Ekle</h2>
+    <div class="form-group">
+      <label>Kalem</label>
+      <select id="modal-kalem" onchange="onKalemChange()">
+        <option value="">— Seçiniz —</option>
+      </select>
+    </div>
+    <div class="form-group" id="custom-kalem-group" style="display:none;">
+      <label>Özel Kalem Adı</label>
+      <input type="text" id="modal-custom-kalem" placeholder="Kalem adını yazın...">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Tutar (₺)</label>
+        <input type="number" id="modal-tutar" placeholder="0.00" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Tarih</label>
+        <input type="date" id="modal-tarih">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Açıklama (isteğe bağlı)</label>
+      <textarea id="modal-aciklama" placeholder="Notunuzu yazın..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">İptal</button>
+      <button class="btn btn-primary" id="modal-save-btn" onclick="saveTransaction()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT ITEM MODAL -->
+<div class="modal-overlay" id="edit-modal" onclick="closeEditOut(event)">
+  <div class="modal" style="width:380px;">
+    <h2>Kalemi Düzenle</h2>
+    <input type="hidden" id="edit-type">
+    <input type="hidden" id="edit-index">
+    <div class="form-group">
+      <label>Kalem Adı</label>
+      <input type="text" id="edit-name">
+    </div>
+    <div class="form-group">
+      <div class="checkbox-row" style="margin-bottom:8px;">
+        <input type="checkbox" id="edit-fixed-chk" onchange="toggleEditFixed()">
+        <label for="edit-fixed-chk">Sabit Fiyat</label>
+      </div>
+      <input type="number" id="edit-price" placeholder="Fiyat ₺" style="width:100%; display:none;" min="0">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeEditModal()">İptal</button>
+      <button class="btn btn-primary" onclick="saveEditItem()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ============ STATE ============
+let state = {
+  transactions: [],
+  gelirItems: [
+    { name: 'Yolcu Ücreti', fixed: true, price: 1000 }
+  ],
+  giderItems: [
+    { name: 'Şöför Ücreti', fixed: false, price: 0 },
+    { name: 'Yemek Ücreti', fixed: false, price: 0 },
+    { name: 'Yakıt Ücreti', fixed: false, price: 0 }
+  ]
+};
+
+let currentModalType = 'gelir';
+
+function loadState() {
+  try {
+    const s = localStorage.getItem('seyahat_kasa');
+    if (s) state = JSON.parse(s);
+  } catch(e) {}
+}
+
+function saveState() {
+  localStorage.setItem('seyahat_kasa', JSON.stringify(state));
+}
+
+// ============ NAV ============
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('nav button').forEach((b, i) => {
+    b.classList.toggle('active', ['dashboard','transactions','report','settings'][i] === id);
+  });
+  if (id === 'dashboard') { renderKPIs(); renderDashTable(); }
+  if (id === 'transactions') renderTransactions();
+  if (id === 'report') renderReport();
+  if (id === 'settings') renderSettings();
+}
+
+// ============ MODAL ============
+function openModal(type) {
+  currentModalType = type;
+  document.getElementById('modal-title').textContent = type === 'gelir' ? 'Gelir Ekle' : 'Gider Ekle';
+  document.getElementById('modal-save-btn').className = 'btn ' + (type === 'gelir' ? 'btn-success' : 'btn-danger-outline');
+
+  // Populate select
+  const sel = document.getElementById('modal-kalem');
+  sel.innerHTML = '<option value="">— Seçiniz —</option>';
+  const items = type === 'gelir' ? state.gelirItems : state.giderItems;
+  items.forEach((it, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = it.name + (it.fixed ? ` (₺${fmt(it.price)})` : '');
+    sel.appendChild(opt);
+  });
+  const customOpt = document.createElement('option');
+  customOpt.value = 'custom';
+  customOpt.textContent = '+ Özel Kalem Gir';
+  sel.appendChild(customOpt);
+
+  // Default selection
+  if (items.length > 0) {
+    sel.value = '0';
+    onKalemChange();
+  }
+
+  // Date default today
+  document.getElementById('modal-tarih').value = todayStr();
+  document.getElementById('modal-aciklama').value = '';
+  document.getElementById('modal-custom-kalem').value = '';
+
+  document.getElementById('tx-modal').classList.add('open');
+}
+
+function onKalemChange() {
+  const val = document.getElementById('modal-kalem').value;
+  const customGroup = document.getElementById('custom-kalem-group');
+  const items = currentModalType === 'gelir' ? state.gelirItems : state.giderItems;
+
+  if (val === 'custom') {
+    customGroup.style.display = 'block';
+    document.getElementById('modal-tutar').value = '';
+  } else if (val !== '') {
+    customGroup.style.display = 'none';
+    const item = items[parseInt(val)];
+    document.getElementById('modal-tutar').value = item.fixed ? item.price : '';
+  } else {
+    customGroup.style.display = 'none';
+    document.getElementById('modal-tutar').value = '';
+  }
+}
+
+function closeModal() {
+  document.getElementById('tx-modal').classList.remove('open');
+}
+function closeModalOut(e) {
+  if (e.target === document.getElementById('tx-modal')) closeModal();
+}
+
+function saveTransaction() {
+  const kalemVal = document.getElementById('modal-kalem').value;
+  const tutar = parseFloat(document.getElementById('modal-tutar').value);
+  const tarih = document.getElementById('modal-tarih').value;
+  const aciklama = document.getElementById('modal-aciklama').value.trim();
+
+  if (!tarih) { toast('Tarih giriniz.', 'err'); return; }
+  if (isNaN(tutar) || tutar <= 0) { toast('Geçerli bir tutar giriniz.', 'err'); return; }
+
+  let kalemAdi = '';
+  if (kalemVal === 'custom') {
+    kalemAdi = document.getElementById('modal-custom-kalem').value.trim();
+    if (!kalemAdi) { toast('Kalem adı giriniz.', 'err'); return; }
+  } else if (kalemVal !== '') {
+    const items = currentModalType === 'gelir' ? state.gelirItems : state.giderItems;
+    kalemAdi = items[parseInt(kalemVal)].name;
+  } else {
+    toast('Kalem seçiniz.', 'err'); return;
+  }
+
+  state.transactions.push({
+    id: Date.now(),
+    type: currentModalType,
+    kalem: kalemAdi,
+    tutar: tutar,
+    tarih: tarih,
+    aciklama: aciklama
+  });
+  saveState();
+  closeModal();
+  toast(currentModalType === 'gelir' ? 'Gelir eklendi.' : 'Gider eklendi.', 'ok');
+  renderKPIs(); renderDashTable();
+}
+
+// ============ KPIs ============
+function renderKPIs() {
+  const total_gelir = state.transactions.filter(t => t.type === 'gelir').reduce((s,t) => s+t.tutar, 0);
+  const total_gider = state.transactions.filter(t => t.type === 'gider').reduce((s,t) => s+t.tutar, 0);
+  const kasa = total_gelir - total_gider;
+
+  const grid = document.getElementById('kpi-grid');
+  grid.innerHTML = `
+    <div class="kpi">
+      <label>Toplam Gelir</label>
+      <div class="val pos">₺${fmt(total_gelir)}</div>
+    </div>
+    <div class="kpi">
+      <label>Toplam Gider</label>
+      <div class="val neg">₺${fmt(total_gider)}</div>
+    </div>
+    <div class="kpi">
+      <label>Net Kasa</label>
+      <div class="val ${kasa >= 0 ? 'pos' : 'neg'}">₺${fmt(kasa)}</div>
+    </div>
+    <div class="kpi">
+      <label>İşlem Sayısı</label>
+      <div class="val neu">${state.transactions.length}</div>
+    </div>
+  `;
+}
+
+// ============ TABLES ============
+function renderDashTable() {
+  const sorted = [...state.transactions].sort((a,b) => b.tarih.localeCompare(a.tarih)).slice(0, 20);
+  document.getElementById('dash-table').innerHTML = buildTable(sorted, false);
+}
+
+function renderTransactions() {
+  const ftype = document.getElementById('filter-type').value;
+  const fstart = document.getElementById('filter-start').value;
+  const fend = document.getElementById('filter-end').value;
+
+  let list = [...state.transactions];
+  if (ftype) list = list.filter(t => t.type === ftype);
+  if (fstart) list = list.filter(t => t.tarih >= fstart);
+  if (fend) list = list.filter(t => t.tarih <= fend);
+  list.sort((a,b) => b.tarih.localeCompare(a.tarih));
+  document.getElementById('tx-table').innerHTML = buildTable(list, true);
+}
+
+function buildTable(rows, showDel) {
+  if (!rows.length) return `<div class="empty">
+    <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+      <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+    </svg>
+    Kayıt bulunamadı.
+  </div>`;
+
+  let html = `<table><thead><tr>
+    <th>Tür</th><th>Kalem Adı</th><th>Tutar</th><th>Tarih</th><th>Açıklama</th>
+    ${showDel ? '<th></th>' : ''}
+  </tr></thead><tbody>`;
+
+  rows.forEach(t => {
+    const badge = t.type === 'gelir'
+      ? '<span class="badge gelir">▲ Gelir</span>'
+      : '<span class="badge gider">▼ Gider</span>';
+    const amtClass = t.type === 'gelir' ? 'amount-pos' : 'amount-neg';
+    const sign = t.type === 'gelir' ? '+' : '-';
+    html += `<tr>
+      <td>${badge}</td>
+      <td>${esc(t.kalem)}</td>
+      <td class="${amtClass}">${sign}₺${fmt(t.tutar)}</td>
+      <td style="color:var(--text2);">${formatDate(t.tarih)}</td>
+      <td style="color:var(--text2); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(t.aciklama) || '—'}</td>
+      ${showDel ? `<td><button class="del-btn" onclick="delTx(${t.id})" title="Sil">✕</button></td>` : ''}
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  return html;
+}
+
+function delTx(id) {
+  if (!confirm('Bu işlemi silmek istediğinizden emin misiniz?')) return;
+  state.transactions = state.transactions.filter(t => t.id !== id);
+  saveState();
+  renderTransactions();
+  renderKPIs(); renderDashTable();
+  toast('İşlem silindi.', 'ok');
+}
+
+function clearFilters() {
+  document.getElementById('filter-type').value = '';
+  document.getElementById('filter-start').value = '';
+  document.getElementById('filter-end').value = '';
+  renderTransactions();
+}
+
+// ============ REPORT ============
+function renderReport() {
+  const period = document.getElementById('rep-period').value;
+  const customDiv = document.getElementById('custom-range');
+
+  let start, end;
+  const today = new Date();
+
+  if (period === 'week') {
+    const day = today.getDay() || 7;
+    start = new Date(today); start.setDate(today.getDate() - day + 1);
+    end = new Date(today);
+    customDiv.style.display = 'none';
+  } else if (period === 'month') {
+    start = new Date(today.getFullYear(), today.getMonth(), 1);
+    end = new Date(today);
+    customDiv.style.display = 'none';
+  } else {
+    customDiv.style.display = 'flex';
+    const rs = document.getElementById('rep-start').value;
+    const re = document.getElementById('rep-end').value;
+    if (!rs || !re) { document.getElementById('rep-summary').innerHTML = ''; document.getElementById('rep-table').innerHTML = ''; return; }
+    start = new Date(rs); end = new Date(re);
+  }
+
+  const startStr = dateStr(start);
+  const endStr = dateStr(end);
+
+  const rows = state.transactions.filter(t => t.tarih >= startStr && t.tarih <= endStr);
+  const gelir = rows.filter(t => t.type === 'gelir').reduce((s,t) => s+t.tutar, 0);
+  const gider = rows.filter(t => t.type === 'gider').reduce((s,t) => s+t.tutar, 0);
+  const net = gelir - gider;
+
+  document.getElementById('rep-title').textContent = `${formatDate(startStr)} — ${formatDate(endStr)} Detayı`;
+
+  document.getElementById('rep-summary').innerHTML = `
+    <div class="rep-card">
+      <label>Toplam Gelir</label>
+      <div class="val" style="color:var(--green)">₺${fmt(gelir)}</div>
+    </div>
+    <div class="rep-card">
+      <label>Toplam Gider</label>
+      <div class="val" style="color:var(--red)">₺${fmt(gider)}</div>
+    </div>
+    <div class="rep-card">
+      <label>Net ${net >= 0 ? 'Kâr' : 'Zarar'}</label>
+      <div class="val" style="color:${net >= 0 ? 'var(--green)' : 'var(--red)'}">₺${fmt(Math.abs(net))}</div>
+    </div>
+    <div class="rep-card">
+      <label>İşlem Sayısı</label>
+      <div class="val" style="color:var(--accent)">${rows.length}</div>
+    </div>
+  `;
+
+  const sorted = [...rows].sort((a,b) => b.tarih.localeCompare(a.tarih));
+  document.getElementById('rep-table').innerHTML = buildTable(sorted, false);
+}
+
+document.getElementById('rep-period').addEventListener('change', function() {
+  if (this.value !== 'custom') document.getElementById('custom-range').style.display = 'none';
+  renderReport();
+});
+
+// ============ SETTINGS ============
+function renderSettings() {
+  renderItemList('gelir');
+  renderItemList('gider');
+}
+
+function renderItemList(type) {
+  const items = type === 'gelir' ? state.gelirItems : state.giderItems;
+  const container = document.getElementById(type + '-items');
+  if (!items.length) { container.innerHTML = '<div style="color:var(--text3); font-size:13px; padding:8px 0;">Henüz kalem eklenmedi.</div>'; return; }
+  container.innerHTML = items.map((it, i) => `
+    <div class="item-row">
+      <span class="name">${esc(it.name)}</span>
+      ${it.fixed ? `<span class="fixed-tag">Sabit</span><span class="price-tag">₺${fmt(it.price)}</span>` : '<span class="price-tag">Değişken</span>'}
+      <button class="btn btn-outline btn-sm" onclick="editItem('${type}', ${i})">Düzenle</button>
+      <button class="del-btn" onclick="delItem('${type}', ${i})" title="Sil">✕</button>
+    </div>
+  `).join('');
+}
+
+function toggleFixedPrice(type) {
+  const chk = document.getElementById(type + '-fixed-chk');
+  const priceInp = document.getElementById(type + '-price-inp');
+  priceInp.style.display = chk.checked ? 'block' : 'none';
+}
+
+function addItem(type) {
+  const nameInp = document.getElementById(type + '-name-inp');
+  const fixedChk = document.getElementById(type + '-fixed-chk');
+  const priceInp = document.getElementById(type + '-price-inp');
+
+  const name = nameInp.value.trim();
+  if (!name) { toast('Kalem adı giriniz.', 'err'); return; }
+
+  const fixed = fixedChk.checked;
+  const price = fixed ? parseFloat(priceInp.value) || 0 : 0;
+
+  const arr = type === 'gelir' ? state.gelirItems : state.giderItems;
+  arr.push({ name, fixed, price });
+  saveState();
+
+  nameInp.value = '';
+  fixedChk.checked = false;
+  priceInp.style.display = 'none';
+  priceInp.value = '';
+
+  renderItemList(type);
+  toast('Kalem eklendi.', 'ok');
+}
+
+function delItem(type, i) {
+  if (!confirm('Bu kalemi silmek istiyor musunuz?')) return;
+  const arr = type === 'gelir' ? state.gelirItems : state.giderItems;
+  arr.splice(i, 1);
+  saveState();
+  renderItemList(type);
+  toast('Kalem silindi.', 'ok');
+}
+
+// EDIT ITEM
+function editItem(type, i) {
+  const arr = type === 'gelir' ? state.gelirItems : state.giderItems;
+  const it = arr[i];
+  document.getElementById('edit-type').value = type;
+  document.getElementById('edit-index').value = i;
+  document.getElementById('edit-name').value = it.name;
+  document.getElementById('edit-fixed-chk').checked = it.fixed;
+  const priceEl = document.getElementById('edit-price');
+  priceEl.style.display = it.fixed ? 'block' : 'none';
+  priceEl.value = it.price || '';
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+function toggleEditFixed() {
+  const chk = document.getElementById('edit-fixed-chk');
+  document.getElementById('edit-price').style.display = chk.checked ? 'block' : 'none';
+}
+
+function closeEditModal() { document.getElementById('edit-modal').classList.remove('open'); }
+function closeEditOut(e) { if (e.target === document.getElementById('edit-modal')) closeEditModal(); }
+
+function saveEditItem() {
+  const type = document.getElementById('edit-type').value;
+  const i = parseInt(document.getElementById('edit-index').value);
+  const name = document.getElementById('edit-name').value.trim();
+  const fixed = document.getElementById('edit-fixed-chk').checked;
+  const price = parseFloat(document.getElementById('edit-price').value) || 0;
+  if (!name) { toast('Kalem adı giriniz.', 'err'); return; }
+  const arr = type === 'gelir' ? state.gelirItems : state.giderItems;
+  arr[i] = { name, fixed, price };
+  saveState();
+  closeEditModal();
+  renderItemList(type);
+  toast('Kalem güncellendi.', 'ok');
+}
+
+// ============ IMPORT / EXPORT ============
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'seyahat_kasa_' + todayStr() + '.json';
+  a.click();
+  toast('Veriler dışa aktarıldı.', 'ok');
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (!imported.transactions) throw new Error();
+      if (!confirm(`${imported.transactions.length} işlem ve ayarlar içe aktarılacak. Mevcut veriler silinecek. Devam edilsin mi?`)) return;
+      state = imported;
+      saveState();
+      renderKPIs(); renderDashTable();
+      toast('Veriler içe aktarıldı.', 'ok');
+    } catch {
+      toast('Geçersiz dosya.', 'err');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function clearAll() {
+  if (!confirm('Tüm işlem kayıtları silinecek. Ayarlar korunacak. Devam edilsin mi?')) return;
+  state.transactions = [];
+  saveState();
+  renderKPIs(); renderDashTable();
+  toast('Tüm kayıtlar temizlendi.', 'ok');
+}
+
+// ============ HELPERS ============
+function fmt(n) {
+  return Number(n).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function todayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+function dateStr(d) {
+  return d.toISOString().split('T')[0];
+}
+function formatDate(s) {
+  if (!s) return '';
+  const [y,m,d] = s.split('-');
+  return `${d}.${m}.${y}`;
+}
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + (type || '');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => el.className = '', 2800);
+}
+
+// ============ INIT ============
+loadState();
+renderKPIs();
+renderDashTable();
+</script>
+</body>
+</html>
