@@ -1,3 +1,0 @@
-﻿.sayfa-icerik { display: none; }
-.sayfa-icerik:not(.hidden) { display: block; }
-.hidden { display: none !important; }
