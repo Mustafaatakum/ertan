@@ -1,0 +1,205 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seyahat Kasa Takip Deneme No:5</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        .tab-content { display: none !important; }
+        .tab-content.active { display: block !important; }
+        .glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(8px); }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans min-h-screen">
+
+<div class="container mx-auto p-4 max-w-5xl">
+    <header class="bg-indigo-800 text-white p-8 rounded-t-3xl shadow-xl">
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h1 class="text-2xl font-black uppercase tracking-tighter">Seyahat Kasa Takip</h1>
+                <span class="bg-yellow-400 text-indigo-900 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Deneme No: 5</span>
+            </div>
+            <div id="current-date" class="glass px-4 py-2 rounded-xl text-xs font-bold"></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="glass p-4 rounded-2xl"><p class="text-[10px] uppercase font-bold opacity-70 mb-1">Gelir</p><p id="stat-gelir" class="text-2xl font-black text-green-400">0.00 ₺</p></div>
+            <div class="glass p-4 rounded-2xl"><p class="text-[10px] uppercase font-bold opacity-70 mb-1">Gider</p><p id="stat-gider" class="text-2xl font-black text-red-400">0.00 ₺</p></div>
+            <div id="stat-kar-box" class="glass p-4 rounded-2xl border-l-4 border-white"><p class="text-[10px] uppercase font-bold opacity-70 mb-1">Net Durum</p><p id="stat-kar" class="text-2xl font-black">0.00 ₺</p></div>
+        </div>
+    </header>
+
+    <nav class="bg-white border-b flex shadow-sm sticky top-0 z-50">
+        <button onclick="showTab('kasa')" class="flex-1 py-4 text-xs font-black border-b-4 border-transparent focus:border-indigo-600 uppercase">Kasa Listesi</button>
+        <button onclick="showTab('ekle')" class="flex-1 py-4 text-xs font-black border-b-4 border-transparent focus:border-indigo-600 uppercase">Yeni İşlem</button>
+        <button onclick="showTab('ayarlar')" class="flex-1 py-4 text-xs font-black border-b-4 border-transparent focus:border-indigo-600 uppercase">Ayarlar</button>
+        <button onclick="showTab('veri')" class="flex-1 py-4 text-xs font-black border-b-4 border-transparent focus:border-indigo-600 uppercase">Veri Yönetimi</button>
+    </nav>
+
+    <div id="kasa" class="tab-content active bg-white p-6 shadow-xl rounded-b-3xl">
+        <div class="flex gap-2 mb-6 bg-slate-50 p-4 rounded-xl border items-end">
+            <div class="flex-1"><label class="text-[10px] font-bold text-slate-400 uppercase block">Başlangıç</label><input type="date" id="filter-start" class="w-full border p-2 rounded-lg text-sm"></div>
+            <div class="flex-1"><label class="text-[10px] font-bold text-slate-400 uppercase block">Bitiş</label><input type="date" id="filter-end" class="w-full border p-2 rounded-lg text-sm"></div>
+            <button onclick="filterTable()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold text-xs uppercase">Süz</button>
+            <button onclick="downloadPDF()" class="bg-slate-800 text-white px-6 py-2 rounded-lg font-bold text-xs uppercase">PDF</button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead><tr class="text-[10px] text-slate-400 uppercase border-b"><th class="p-3">Tür</th><th class="p-3">Kalem</th><th class="p-3 text-right">Tutar</th><th class="p-3 text-center">Tarih</th><th class="p-3 text-center">Sil</th></tr></thead>
+                <tbody id="kasa-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="ekle" class="tab-content bg-white p-8 shadow-xl rounded-b-3xl">
+        <div class="max-w-md mx-auto space-y-4">
+            <div class="flex p-1 bg-slate-100 rounded-xl border">
+                <label class="flex-1 text-center py-2 rounded-lg cursor-pointer font-bold text-xs has-[:checked]:bg-green-500 has-[:checked]:text-white uppercase"><input type="radio" name="type" value="Gelir" class="hidden" checked onclick="updateSelectionList()"> Gelir (+)</label>
+                <label class="flex-1 text-center py-2 rounded-lg cursor-pointer font-bold text-xs has-[:checked]:bg-red-500 has-[:checked]:text-white uppercase"><input type="radio" name="type" value="Gider" class="hidden" onclick="updateSelectionList()"> Gider (-)</label>
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Kalem</label>
+                <select id="item-select" onchange="handleItemSelect()" class="w-full border p-3 rounded-xl font-bold"></select>
+                <input type="text" id="manual-name" placeholder="Kalem Adı..." class="w-full mt-2 border p-3 rounded-xl hidden">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <input type="number" id="form-price" placeholder="Tutar" class="w-full border p-3 rounded-xl font-black">
+                <input type="date" id="form-date" class="w-full border p-3 rounded-xl text-sm">
+            </div>
+            <textarea id="form-desc" placeholder="Notlar..." class="w-full border p-3 rounded-xl text-sm" rows="2"></textarea>
+            <button onclick="saveRecord()" class="w-full bg-indigo-600 text-white p-4 rounded-xl font-black uppercase shadow-lg">Kaydet</button>
+        </div>
+    </div>
+
+    <div id="ayarlar" class="tab-content bg-white p-8 shadow-xl rounded-b-3xl">
+        <div class="grid md:grid-cols-2 gap-8">
+            <div class="bg-slate-50 p-6 rounded-2xl border space-y-3">
+                <h3 class="font-black uppercase text-xs">Kalem Ekle</h3>
+                <input type="text" id="set-name" placeholder="Kalem Adı" class="w-full p-3 rounded-lg border">
+                <select id="set-type" class="w-full p-3 rounded-lg border"><option value="Gelir">Gelir</option><option value="Gider">Gider</option></select>
+                <input type="number" id="set-price" placeholder="Sabit Fiyat (Opsiyonel)" class="w-full p-3 rounded-lg border">
+                <button onclick="addSettingItem()" class="w-full bg-slate-800 text-white p-3 rounded-lg font-bold uppercase text-[10px]">Listeye Ekle</button>
+            </div>
+            <div id="settings-list" class="space-y-2"></div>
+        </div>
+    </div>
+
+    <div id="veri" class="tab-content bg-white p-12 shadow-xl rounded-b-3xl text-center space-y-4">
+        <div class="flex justify-center gap-4">
+            <button onclick="exportData()" class="px-6 py-4 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 font-bold uppercase text-[10px]">Yedek Al</button>
+            <label class="px-6 py-4 rounded-xl bg-green-50 text-green-600 border border-green-100 font-bold uppercase text-[10px] cursor-pointer">Yükle<input type="file" class="hidden" onchange="importData(event)"></label>
+            <button onclick="clearAllData()" class="px-6 py-4 rounded-xl bg-red-50 text-red-600 border border-red-100 font-bold uppercase text-[10px]">Sıfırla</button>
+        </div>
+        <p class="text-[10px] font-bold text-slate-300 uppercase">Mustafa Şahin • Samsun Atakum MESEM 2026</p>
+    </div>
+</div>
+
+<script>
+    // VERİLERİ YÜKLE
+    let records = JSON.parse(localStorage.getItem('records')) || [];
+    let settings = JSON.parse(localStorage.getItem('settings')) || [{name:"Yolcu Ücreti",type:"Gelir",price:1000},{name:"Akaryakıt",type:"Gider",price:0}];
+
+    // MENÜ GEÇİŞ FONKSİYONU (KRİTİK)
+    function showTab(id) {
+        console.log("Sekme değiştiriliyor: " + id);
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        const target = document.getElementById(id);
+        if(target) target.classList.add('active');
+        
+        if(id === 'kasa') renderTable();
+        if(id === 'ekle') updateSelectionList();
+        if(id === 'ayarlar') renderSettings();
+    }
+
+    // DİĞER TÜM JS FONKSİYONLARI
+    document.getElementById('current-date').textContent = new Date().toLocaleDateString('tr-TR');
+
+    function renderTable(data = records) {
+        const tbody = document.getElementById('kasa-tbody');
+        tbody.innerHTML = '';
+        let gel = 0, gid = 0;
+        data.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(r => {
+            if(r.type === 'Gelir') gel += r.price; else gid += r.price;
+            tbody.innerHTML += <tr class="border-b hover:bg-slate-50"><td class="p-3 text-[9px] font-black uppercase "></td><td class="p-3 font-bold text-sm text-slate-700"></td><td class="p-3 text-right font-black"> ₺</td><td class="p-3 text-center text-xs"></td><td class="p-3 text-center"><button onclick="delRec()">❌</button></td></tr>;
+        });
+        document.getElementById('stat-gelir').textContent = gel.toLocaleString() + ' ₺';
+        document.getElementById('stat-gider').textContent = gid.toLocaleString() + ' ₺';
+        const net = gel - gid;
+        document.getElementById('stat-kar').textContent = net.toLocaleString() + ' ₺';
+        document.getElementById('stat-kar-box').className = net >= 0 ? "glass p-4 rounded-2xl border-l-4 border-green-400" : "glass p-4 rounded-2xl border-l-4 border-red-400";
+    }
+
+    function updateSelectionList() {
+        const type = document.querySelector('input[name="type"]:checked').value;
+        const select = document.getElementById('item-select');
+        select.innerHTML = '';
+        settings.filter(s => s.type === type).forEach(s => {
+            select.innerHTML += <option value=""></option>;
+        });
+        select.innerHTML += <option value="CUSTOM">🔍 Diğer...</option>;
+        handleItemSelect();
+        document.getElementById('form-date').valueAsDate = new Date();
+    }
+
+    function handleItemSelect() {
+        const val = document.getElementById('item-select').value;
+        const pInput = document.getElementById('form-price');
+        const mInput = document.getElementById('manual-name');
+        const s = settings.find(x => x.name === val);
+        if(s) { pInput.value = s.price; mInput.value = s.name; mInput.classList.add('hidden'); }
+        else { pInput.value = 0; mInput.value = ""; mInput.classList.remove('hidden'); }
+    }
+
+    function saveRecord() {
+        const r = { id: Date.now(), type: document.querySelector('input[name="type"]:checked').value, name: document.getElementById('manual-name').value, price: parseFloat(document.getElementById('form-price').value) || 0, date: document.getElementById('form-date').value, desc: document.getElementById('form-desc').value };
+        if(!r.name || !r.date) return alert("Eksik bilgi!");
+        records.push(r);
+        localStorage.setItem('records', JSON.stringify(records));
+        showTab('kasa');
+    }
+
+    function delRec(id) { if(confirm("Silinsin mi?")) { records = records.filter(x => x.id !== id); localStorage.setItem('records', JSON.stringify(records)); renderTable(); } }
+    
+    function renderSettings() {
+        const list = document.getElementById('settings-list');
+        list.innerHTML = '';
+        settings.forEach((s, i) => {
+            list.innerHTML += <div class="flex justify-between p-3 bg-white border rounded-xl shadow-sm text-xs font-bold uppercase border-l-4 "><span> (₺)</span><button onclick="settings.splice(,1);renderSettings();">Sil</button></div>;
+        });
+        localStorage.setItem('settings', JSON.stringify(settings));
+    }
+
+    function addSettingItem() {
+        const n = document.getElementById('set-name').value;
+        if(!n) return;
+        settings.push({name:n, type:document.getElementById('set-type').value, price:parseFloat(document.getElementById('set-price').value)||0});
+        renderSettings();
+        document.getElementById('set-name').value='';
+    }
+
+    function exportData() {
+        const blob = new Blob([JSON.stringify({records, settings})], {type:"application/json"});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "kasa_yedek.json"; a.click();
+    }
+
+    function importData(e) {
+        const fr = new FileReader();
+        fr.onload = x => {
+            const d = JSON.parse(x.target.result);
+            records = d.records; settings = d.settings;
+            localStorage.setItem('records', JSON.stringify(records));
+            localStorage.setItem('settings', JSON.stringify(settings));
+            location.reload();
+        };
+        fr.readAsText(e.target.files[0]);
+    }
+
+    function clearAllData() { if(confirm("Tüm veriler sıfırlansın mı?")) { records = []; localStorage.setItem('records', "[]"); renderTable(); } }
+    
+    // İLK ÇALIŞTIRMA
+    renderTable();
+</script>
+</body>
+</html>
