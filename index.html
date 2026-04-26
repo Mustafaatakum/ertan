@@ -119,12 +119,15 @@
   .badge.gider { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
   .amount-pos { color: var(--green); font-weight: 600; }
   .amount-neg { color: var(--red); font-weight: 600; }
-  .del-btn {
-    background: none; border: none; color: var(--text3);
-    cursor: pointer; padding: 4px 8px; border-radius: 6px;
-    font-size: 16px; transition: all 0.15s;
+  .del-btn, .edit-btn {
+    background: none; border: none;
+    cursor: pointer; padding: 6px 7px; border-radius: 7px;
+    transition: all 0.15s; display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text3);
   }
   .del-btn:hover { background: var(--red-bg); color: var(--red); }
+  .edit-btn:hover { background: var(--blue-bg); color: var(--blue); }
+  .action-cell { display: flex; gap: 2px; align-items: center; }
 
   /* FILTERS */
   .filter-bar {
@@ -613,7 +616,7 @@ function renderKPIs() {
 // ============ TABLES ============
 function renderDashTable() {
   const sorted = [...state.transactions].sort((a,b) => b.tarih.localeCompare(a.tarih)).slice(0, 20);
-  document.getElementById('dash-table').innerHTML = buildTable(sorted, false);
+  document.getElementById('dash-table').innerHTML = buildTable(sorted, true);
 }
 
 function renderTransactions() {
@@ -629,7 +632,7 @@ function renderTransactions() {
   document.getElementById('tx-table').innerHTML = buildTable(list, true);
 }
 
-function buildTable(rows, showDel) {
+function buildTable(rows, showActions) {
   if (!rows.length) return `<div class="empty">
     <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
       <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
@@ -637,9 +640,11 @@ function buildTable(rows, showDel) {
     Kayıt bulunamadı.
   </div>`;
 
+  const iconEdit = `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+  const iconDel  = `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>`;
+
   let html = `<table><thead><tr>
-    <th>Tür</th><th>Kalem Adı</th><th>Tutar</th><th>Tarih</th><th>Açıklama</th>
-    ${showDel ? '<th></th>' : ''}
+    <th>Tür</th><th>Kalem Adı</th><th>Tutar</th><th>Tarih</th><th>Açıklama</th><th></th>
   </tr></thead><tbody>`;
 
   rows.forEach(t => {
@@ -654,7 +659,10 @@ function buildTable(rows, showDel) {
       <td class="${amtClass}">${sign}₺${fmt(t.tutar)}</td>
       <td style="color:var(--text2);">${formatDate(t.tarih)}</td>
       <td style="color:var(--text2); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(t.aciklama) || '—'}</td>
-      ${showDel ? `<td><button class="del-btn" onclick="delTx(${t.id})" title="Sil">✕</button></td>` : ''}
+      <td><div class="action-cell">
+        <button class="edit-btn" onclick="editTx(${t.id})" title="Düzenle">${iconEdit}</button>
+        <button class="del-btn" onclick="delTx(${t.id})" title="Sil">${iconDel}</button>
+      </div></td>
     </tr>`;
   });
 
@@ -669,6 +677,78 @@ function delTx(id) {
   renderTransactions();
   renderKPIs(); renderDashTable();
   toast('İşlem silindi.', 'ok');
+}
+
+function editTx(id) {
+  const t = state.transactions.find(x => x.id === id);
+  if (!t) return;
+  currentModalType = t.type;
+  document.getElementById('modal-title').textContent = t.type === 'gelir' ? 'Geliri Düzenle' : 'Gideri Düzenle';
+  document.getElementById('modal-save-btn').className = 'btn ' + (t.type === 'gelir' ? 'btn-success' : 'btn-danger-outline');
+  document.getElementById('modal-save-btn').onclick = () => saveTxEdit(id);
+
+  // Populate select
+  const sel = document.getElementById('modal-kalem');
+  sel.innerHTML = '<option value="">— Seçiniz —</option>';
+  const items = t.type === 'gelir' ? state.gelirItems : state.giderItems;
+  items.forEach((it, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = it.name + (it.fixed ? ` (₺${fmt(it.price)})` : '');
+    sel.appendChild(opt);
+  });
+  const customOpt = document.createElement('option');
+  customOpt.value = 'custom';
+  customOpt.textContent = '+ Özel Kalem Gir';
+  sel.appendChild(customOpt);
+
+  // Try to match existing kalem
+  const matchIdx = items.findIndex(it => it.name === t.kalem);
+  if (matchIdx >= 0) {
+    sel.value = matchIdx;
+    document.getElementById('custom-kalem-group').style.display = 'none';
+  } else {
+    sel.value = 'custom';
+    document.getElementById('custom-kalem-group').style.display = 'block';
+    document.getElementById('modal-custom-kalem').value = t.kalem;
+  }
+
+  document.getElementById('modal-tutar').value = t.tutar;
+  document.getElementById('modal-tarih').value = t.tarih;
+  document.getElementById('modal-aciklama').value = t.aciklama || '';
+  document.getElementById('tx-modal').classList.add('open');
+}
+
+function saveTxEdit(id) {
+  const kalemVal = document.getElementById('modal-kalem').value;
+  const tutar = parseFloat(document.getElementById('modal-tutar').value);
+  const tarih = document.getElementById('modal-tarih').value;
+  const aciklama = document.getElementById('modal-aciklama').value.trim();
+
+  if (!tarih) { toast('Tarih giriniz.', 'err'); return; }
+  if (isNaN(tutar) || tutar <= 0) { toast('Geçerli bir tutar giriniz.', 'err'); return; }
+
+  let kalemAdi = '';
+  if (kalemVal === 'custom') {
+    kalemAdi = document.getElementById('modal-custom-kalem').value.trim();
+    if (!kalemAdi) { toast('Kalem adı giriniz.', 'err'); return; }
+  } else if (kalemVal !== '') {
+    const items = currentModalType === 'gelir' ? state.gelirItems : state.giderItems;
+    kalemAdi = items[parseInt(kalemVal)].name;
+  } else {
+    toast('Kalem seçiniz.', 'err'); return;
+  }
+
+  const idx = state.transactions.findIndex(x => x.id === id);
+  if (idx >= 0) {
+    state.transactions[idx] = { ...state.transactions[idx], kalem: kalemAdi, tutar, tarih, aciklama };
+  }
+  saveState();
+  // reset save button to default
+  document.getElementById('modal-save-btn').onclick = saveTransaction;
+  closeModal();
+  toast('İşlem güncellendi.', 'ok');
+  renderKPIs(); renderDashTable(); renderTransactions();
 }
 
 function clearFilters() {
@@ -733,7 +813,7 @@ function renderReport() {
   `;
 
   const sorted = [...rows].sort((a,b) => b.tarih.localeCompare(a.tarih));
-  document.getElementById('rep-table').innerHTML = buildTable(sorted, false);
+  document.getElementById('rep-table').innerHTML = buildTable(sorted, true);
 }
 
 document.getElementById('rep-period').addEventListener('change', function() {
