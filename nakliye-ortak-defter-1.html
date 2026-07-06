@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Nakliye Ortak Hesap Defteri</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#23262B;
+    --paper:#F6F1E7;
+    --paper-dim:#EDE5D3;
+    --asphalt:#14171C;
+    --asphalt-soft:#1E2229;
+    --amber:#C97A3D;
+    --teal:#3E7C6F;
+    --rust:#A8452F;
+    --line:#D8CBB0;
+    --line-dark:#33373E;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--asphalt);
+    color:var(--paper);
+    font-family:'IBM Plex Sans',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{
+    max-width:520px;
+    margin:0 auto;
+    padding:20px 16px 60px;
+  }
+  .hdr{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    padding:18px 4px 22px;
+    border-bottom:1px solid var(--line-dark);
+    margin-bottom:20px;
+  }
+  .hdr h1{
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    font-size:1.5rem;
+    letter-spacing:-0.01em;
+    margin:0 0 4px;
+    color:var(--paper);
+  }
+  .hdr .sub{
+    font-size:0.78rem;
+    color:#8B93A0;
+    letter-spacing:0.02em;
+  }
+  .sync-btn{
+    background:var(--asphalt-soft);
+    border:1px solid var(--line-dark);
+    color:var(--amber);
+    border-radius:8px;
+    padding:8px 12px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.72rem;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    white-space:nowrap;
+  }
+  .sync-btn:active{ transform:scale(0.97); }
+  .sync-dot{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--teal);
+  }
+  .card{
+    background:var(--paper);
+    color:var(--ink);
+    border-radius:14px;
+    padding:18px 16px;
+    margin-bottom:16px;
+    box-shadow:0 1px 0 rgba(0,0,0,0.2);
+  }
+  .card-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.68rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:#8A7B5E;
+    margin-bottom:10px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .card-label .num{
+    background:var(--amber);
+    color:var(--paper);
+    width:18px;height:18px;
+    border-radius:4px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:0.65rem;
+  }
+  .field-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:8px 0;
+    border-bottom:1px dashed var(--line);
+    gap:10px;
+  }
+  .field-row:last-child{border-bottom:none;}
+  .field-row label{
+    font-size:0.86rem;
+    color:var(--ink);
+  }
+  .field-row input[type=number], .field-row input[type=text]{
+    width:110px;
+    text-align:right;
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:6px;
+    padding:6px 8px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.88rem;
+    color:var(--ink);
+  }
+  .field-row input:focus{ outline:2px solid var(--amber); outline-offset:1px; }
+  .computed{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding-top:10px;
+    margin-top:6px;
+    border-top:1px solid var(--line);
+  }
+  .computed .k{ font-size:0.82rem; color:#6B6250; }
+  .computed .v{ font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:1.05rem; }
+  .expense-row{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:7px 0; border-bottom:1px dashed var(--line);
+  }
+  .expense-row .name{ font-size:0.85rem; }
+  .expense-row .amt{ font-family:'IBM Plex Mono',monospace; font-size:0.85rem; display:flex; align-items:center; gap:8px; }
+  .del{
+    background:none; border:none; color:var(--rust); font-size:0.95rem; cursor:pointer; padding:2px 4px;
+  }
+  .add-form{ display:flex; gap:6px; margin-top:10px; }
+  .add-form input[type=text]{ flex:2; border:1px solid var(--line); border-radius:6px; padding:8px; font-size:0.85rem; background:#fff; color:var(--ink);}
+  .add-form input[type=number]{ flex:1; border:1px solid var(--line); border-radius:6px; padding:8px; font-family:'IBM Plex Mono',monospace; font-size:0.85rem; background:#fff; color:var(--ink); text-align:right;}
+  .add-btn{
+    background:var(--asphalt); color:var(--paper); border:none; border-radius:6px;
+    padding:8px 14px; font-size:0.85rem; cursor:pointer; font-weight:600;
+  }
+  .summary-card{
+    background:var(--asphalt-soft);
+    border:1px solid var(--line-dark);
+    border-radius:14px;
+    padding:20px 18px;
+    margin-bottom:16px;
+  }
+  .summary-title{
+    font-family:'IBM Plex Mono',monospace; font-size:0.68rem; letter-spacing:0.08em;
+    text-transform:uppercase; color:#8B93A0; margin-bottom:14px;
+  }
+  .big-row{ display:flex; justify-content:space-between; align-items:baseline; padding:6px 0; }
+  .big-row .k{ font-size:0.85rem; color:#B5BAC4; }
+  .big-row .v{ font-family:'IBM Plex Mono',monospace; font-size:1rem; color:var(--paper); }
+  .profit-row .v{ font-size:1.6rem; font-weight:600; font-family:'Fraunces',serif; }
+  .profit-row.pos .v{ color:var(--teal); }
+  .profit-row.neg .v{ color:var(--rust); }
+  .divider{ height:1px; background:var(--line-dark); margin:12px 0; }
+  .stubs{
+    display:flex; gap:12px; margin-top:8px;
+  }
+  .stub{
+    flex:1;
+    background:var(--paper);
+    color:var(--ink);
+    border-radius:10px;
+    padding:14px 12px;
+    position:relative;
+    border:1px dashed #B7A57B;
+  }
+  .stub::before{
+    content:"";
+    position:absolute; top:50%; left:-6px;
+    width:12px; height:12px; border-radius:50%;
+    background:var(--asphalt); transform:translateY(-50%);
+  }
+  .stub::after{
+    content:"";
+    position:absolute; top:50%; right:-6px;
+    width:12px; height:12px; border-radius:50%;
+    background:var(--asphalt); transform:translateY(-50%);
+  }
+  .stub .who{
+    font-family:'IBM Plex Mono',monospace; font-size:0.7rem; text-transform:uppercase;
+    letter-spacing:0.06em; color:var(--amber); margin-bottom:6px;
+  }
+  .stub .who input{
+    border:none; background:transparent; font-family:'IBM Plex Mono',monospace;
+    font-size:0.7rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--amber);
+    width:100%; padding:0;
+  }
+  .stub .line{ display:flex; justify-content:space-between; font-size:0.78rem; padding:3px 0; color:#6B6250;}
+  .stub .line .v{ font-family:'IBM Plex Mono',monospace; color:var(--ink); }
+  .stub .net{ margin-top:6px; padding-top:6px; border-top:1px solid var(--line); font-weight:600; font-size:0.95rem; display:flex; justify-content:space-between;}
+  .split-input{
+    display:flex; align-items:center; gap:10px; margin-top:10px;
+  }
+  .split-input input[type=range]{ flex:1; }
+  .split-input .pct{ font-family:'IBM Plex Mono',monospace; font-size:0.85rem; width:74px; text-align:right; }
+  .footer-note{
+    text-align:center; font-size:0.7rem; color:#5B6270; margin-top:24px; line-height:1.5;
+  }
+  .reset-btn{
+    display:block; margin:18px auto 0; background:none; border:1px solid var(--line-dark);
+    color:#8B93A0; font-size:0.72rem; padding:8px 14px; border-radius:8px; cursor:pointer;
+    font-family:'IBM Plex Mono',monospace;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <div>
+      <h1>Nakliye Defteri</h1>
+      <div class="sub" id="lastUpdated">Yükleniyor…</div>
+    </div>
+    <button class="sync-btn" id="refreshBtn"><span class="sync-dot"></span>Yenile</button>
+  </div>
+
+  <div class="card">
+    <div class="card-label"><span class="num">1</span>Mazot Masrafı</div>
+    <div class="field-row">
+      <label>Mesafe (km)</label>
+      <input type="number" id="distance" min="0" step="1">
+    </div>
+    <div class="field-row">
+      <label>Tüketim (lt/100km)</label>
+      <input type="number" id="consumption" min="0" step="0.1">
+    </div>
+    <div class="field-row">
+      <label>Mazot fiyatı (TL/lt)</label>
+      <input type="number" id="fuelPrice" min="0" step="0.01">
+    </div>
+    <div class="computed">
+      <span class="k">Toplam mazot masrafı</span>
+      <span class="v" id="fuelCost">0,00 TL</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-label"><span class="num">2</span>Diğer Masraflar</div>
+    <div id="expenseList"></div>
+    <div class="add-form">
+      <input type="text" id="newExpName" placeholder="Kalem (örn. gümrük)">
+      <input type="number" id="newExpAmt" placeholder="TL">
+      <button class="add-btn" id="addExpBtn">Ekle</button>
+    </div>
+    <div class="computed">
+      <span class="k">Diğer masraflar toplamı</span>
+      <span class="v" id="otherCost">0,00 TL</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-label"><span class="num">3</span>Gelir</div>
+    <div class="field-row">
+      <label>Toplam nakliye / satış geliri</label>
+      <input type="number" id="revenue" min="0" step="1">
+    </div>
+  </div>
+
+  <div class="summary-card">
+    <div class="summary-title">Özet</div>
+    <div class="big-row"><span class="k">Toplam masraf</span><span class="v" id="totalCost">0,00 TL</span></div>
+    <div class="big-row"><span class="k">Toplam gelir</span><span class="v" id="totalRevenue">0,00 TL</span></div>
+    <div class="divider"></div>
+    <div class="big-row profit-row" id="profitRow"><span class="k">Net kâr</span><span class="v" id="netProfit">0,00 TL</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-label"><span class="num">4</span>2 Kişi Paylaşımı</div>
+    <div class="split-input">
+      <input type="range" id="splitRange" min="0" max="100" step="5">
+      <span class="pct" id="splitLabel">%50 / %50</span>
+    </div>
+    <div class="stubs">
+      <div class="stub">
+        <div class="who"><input type="text" id="name1" placeholder="Kişi 1" maxlength="16"></div>
+        <div class="line"><span>Masraf payı</span><span class="v" id="p1cost">0,00</span></div>
+        <div class="line"><span>Kâr payı</span><span class="v" id="p1profit">0,00</span></div>
+        <div class="net"><span>Net</span><span id="p1net">0,00</span></div>
+      </div>
+      <div class="stub">
+        <div class="who"><input type="text" id="name2" placeholder="Kişi 2" maxlength="16"></div>
+        <div class="line"><span>Masraf payı</span><span class="v" id="p2cost">0,00</span></div>
+        <div class="line"><span>Kâr payı</span><span class="v" id="p2profit">0,00</span></div>
+        <div class="net"><span>Net</span><span id="p2net">0,00</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    Bu defter paylaşılan hafızada saklanır — hangi telefondan açarsan aç aynı verileri görürsün.<br>
+    Değişiklikler diğer telefona otomatik yansır (yenile ile anında görebilirsin).
+  </div>
+  <button class="reset-btn" id="resetBtn">Tüm verileri sıfırla</button>
+</div>
+
+<script>
+const KEY = 'nakliye-defteri-v1';
+let state = null;
+let dirty = false;
+let saveTimer = null;
+
+const defaultState = {
+  distance: 0, consumption: 0, fuelPrice: 0,
+  expenses: [], revenue: 0,
+  split1: 50,
+  name1: 'Kişi 1', name2: 'Kişi 2',
+  updatedAt: null
+};
+
+function fmt(n){
+  n = Number(n)||0;
+  return n.toLocaleString('tr-TR',{minimumFractionDigits:2, maximumFractionDigits:2}) + ' TL';
+}
+function fmtPlain(n){
+  n = Number(n)||0;
+  return n.toLocaleString('tr-TR',{minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+async function loadState(){
+  try{
+    const res = await window.storage.get(KEY, true);
+    state = res && res.value ? JSON.parse(res.value) : {...defaultState};
+  }catch(e){
+    state = {...defaultState};
+  }
+  render();
+}
+
+async function saveState(){
+  state.updatedAt = Date.now();
+  try{
+    await window.storage.set(KEY, JSON.stringify(state), true);
+  }catch(e){
+    console.error('Kaydetme hatası', e);
+  }
+  updateTimestamp();
+}
+
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveState, 400);
+}
+
+function updateTimestamp(){
+  const el = document.getElementById('lastUpdated');
+  if(!state.updatedAt){ el.textContent = 'Henüz güncelleme yok'; return; }
+  const d = new Date(state.updatedAt);
+  el.textContent = 'Son güncelleme: ' + d.toLocaleString('tr-TR', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit'});
+}
+
+function computeTotals(){
+  const fuelCost = (Number(state.distance)||0)/100 * (Number(state.consumption)||0) * (Number(state.fuelPrice)||0);
+  const otherCost = state.expenses.reduce((s,e)=>s+(Number(e.amount)||0),0);
+  const totalCost = fuelCost + otherCost;
+  const revenue = Number(state.revenue)||0;
+  const netProfit = revenue - totalCost;
+  return {fuelCost, otherCost, totalCost, revenue, netProfit};
+}
+
+function render(){
+  document.getElementById('distance').value = state.distance || '';
+  document.getElementById('consumption').value = state.consumption || '';
+  document.getElementById('fuelPrice').value = state.fuelPrice || '';
+  document.getElementById('revenue').value = state.revenue || '';
+  document.getElementById('name1').value = state.name1;
+  document.getElementById('name2').value = state.name2;
+  document.getElementById('splitRange').value = state.split1;
+
+  const listEl = document.getElementById('expenseList');
+  listEl.innerHTML = '';
+  state.expenses.forEach(exp=>{
+    const row = document.createElement('div');
+    row.className = 'expense-row';
+    row.innerHTML = `<span class="name">${escapeHtml(exp.name)}</span>
+      <span class="amt">${fmt(exp.amount)} <button class="del" data-id="${exp.id}">✕</button></span>`;
+    listEl.appendChild(row);
+  });
+  listEl.querySelectorAll('.del').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      state.expenses = state.expenses.filter(e=>e.id !== btn.dataset.id);
+      render(); scheduleSave();
+    });
+  });
+
+  const t = computeTotals();
+  document.getElementById('fuelCost').textContent = fmt(t.fuelCost);
+  document.getElementById('otherCost').textContent = fmt(t.otherCost);
+  document.getElementById('totalCost').textContent = fmt(t.totalCost);
+  document.getElementById('totalRevenue').textContent = fmt(t.revenue);
+  document.getElementById('netProfit').textContent = fmt(t.netProfit);
+
+  const profitRow = document.getElementById('profitRow');
+  profitRow.classList.remove('pos','neg');
+  profitRow.classList.add(t.netProfit >= 0 ? 'pos' : 'neg');
+
+  const s1 = Number(state.split1)||0;
+  const s2 = 100 - s1;
+  document.getElementById('splitLabel').textContent = `%${s1} / %${s2}`;
+
+  const p1cost = t.totalCost * s1/100;
+  const p2cost = t.totalCost * s2/100;
+  const p1profit = t.netProfit * s1/100;
+  const p2profit = t.netProfit * s2/100;
+
+  document.getElementById('p1cost').textContent = fmtPlain(p1cost);
+  document.getElementById('p2cost').textContent = fmtPlain(p2cost);
+  document.getElementById('p1profit').textContent = fmtPlain(p1profit);
+  document.getElementById('p2profit').textContent = fmtPlain(p2profit);
+  document.getElementById('p1net').textContent = fmtPlain(p1profit);
+  document.getElementById('p2net').textContent = fmtPlain(p2profit);
+
+  updateTimestamp();
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function bindInput(id, field, isText){
+  document.getElementById(id).addEventListener('input', (e)=>{
+    state[field] = isText ? e.target.value : e.target.value;
+    render();
+    scheduleSave();
+  });
+}
+
+document.addEventListener('DOMContentLoaded', async ()=>{
+  await loadState();
+
+  bindInput('distance','distance');
+  bindInput('consumption','consumption');
+  bindInput('fuelPrice','fuelPrice');
+  bindInput('revenue','revenue');
+  bindInput('name1','name1', true);
+  bindInput('name2','name2', true);
+
+  document.getElementById('splitRange').addEventListener('input', (e)=>{
+    state.split1 = Number(e.target.value);
+    render(); scheduleSave();
+  });
+
+  document.getElementById('addExpBtn').addEventListener('click', ()=>{
+    const nameEl = document.getElementById('newExpName');
+    const amtEl = document.getElementById('newExpAmt');
+    const name = nameEl.value.trim();
+    const amt = Number(amtEl.value);
+    if(!name || !amt) return;
+    state.expenses.push({id: Date.now().toString(36)+Math.random().toString(36).slice(2,6), name, amount: amt});
+    nameEl.value=''; amtEl.value='';
+    render(); scheduleSave();
+  });
+
+  document.getElementById('refreshBtn').addEventListener('click', loadState);
+
+  document.getElementById('resetBtn').addEventListener('click', async ()=>{
+    if(!confirm('Tüm veriler silinecek ve her iki telefonda da sıfırlanacak. Onaylıyor musun?')) return;
+    state = {...defaultState};
+    render();
+    await saveState();
+  });
+
+  setInterval(loadState, 8000);
+});
+</script>
+</body>
+</html>
